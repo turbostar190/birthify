@@ -6,10 +6,18 @@ const db = new Database('src/db.sqlite3', {fileMustExist: true}); // https://git
 const moment = require('moment');
 
 let today = moment().format("DD/MM/");
-let res = db.prepare('SELECT uid, date, name FROM ids, birthday WHERE date LIKE ?').all(`${today}%`);
+let res = db.prepare('SELECT ids.uid, birthday.date, birthday.name FROM ids, birthday WHERE ids.id = birthday.chatId AND date LIKE ?').all(`${today}%`);
+
+/**
+ * Ottiene gli anni data la data di nascita
+ * @param {string} date data formattata in DD/MM/YYYY
+ * @returns {number} età
+ */
+function getEta(date) {
+    return moment().diff(moment(date, "DD/MM/YYYY").format("YYYY-MM-DD"), 'years', false)
+}
 
 res.forEach(function (row) {
-    let eta = moment().diff(moment(row.date, "DD/MM/YYYY").format("YYYY-MM-DD"), 'years', false);
-    // console.log(eta);
+    let eta = getEta(row.date);
     bot.sendMessage(row.uid, `${row.name} compie ${eta} anni! Auguri!`);
 });
