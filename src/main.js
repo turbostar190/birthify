@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../config');
 const TeleBot = require('telebot');
 const Database = require('better-sqlite3');
 const db = new Database(config('db').path, {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
@@ -39,10 +39,10 @@ const bot = new TeleBot({
  */
 function isNew(uid) {
     let idUser = String(uid);
-    let row = db.prepare('SELECT id, COUNT(*) AS rep FROM ids WHERE uid = ?').get(idUser);
+    let row = db.prepare('SELECT id, COUNT(*) AS rep FROM ids WHERE uid = ?;').get(idUser);
 
     if (row.rep === 0) {
-        let sql = db.prepare("INSERT INTO ids (uid) VALUES (?)").run(idUser);
+        let sql = db.prepare("INSERT INTO ids (uid) VALUES (?);").run(idUser);
         return {success: true, chatId: sql.lastInsertRowid};
     } else {
         return {success: false, chatId: String(row.id)};
@@ -64,7 +64,7 @@ function getEta(date) {
  * @returns {{ empty: boolean, res: Object}}
  */
 function getBirthdays(uid) {
-    let res = db.prepare('SELECT * FROM ids, birthday WHERE ids.id = birthday.chatId AND ids.uid = ? ORDER BY birthday.date ASC').all(String(uid));
+    let res = db.prepare('SELECT * FROM ids, birthday WHERE ids.id = birthday.chatId AND ids.uid = ? ORDER BY birthday.date ASC;').all(String(uid));
     return {empty: res.length === 0, res: res};
 }
 
@@ -156,7 +156,7 @@ bot.on('ask.nome', msg => {
     if (nome === BUTTONS.annulla.label) return;
 
     let chatId = isNew(msg.from.id).chatId;
-    let sql = db.prepare("INSERT INTO birthday (chatId, date, name) VALUES (?, ?, ?)").run(String(chatId), moment(data, "DD/MM/YYYY").format("YYYY-MM-DD"), nome);
+    let sql = db.prepare("INSERT INTO birthday (chatId, date, name) VALUES (?, ?, ?);").run(String(chatId), moment(data, "DD/MM/YYYY").format("YYYY-MM-DD"), nome);
 
     if (sql.changes > 0) {
         return msg.reply.text(`Perfetto! Compleanno inserito!`, {replyMarkup: replyMarkupOptions});
@@ -196,7 +196,7 @@ bot.on('ask.confDel', msg => {
     let re = new RegExp("del_\\d+");
     if (re.test(text)) {
         let idToDelete = text.split("_");
-        let sql = db.prepare(`DELETE FROM birthday WHERE id = CASE WHEN (SELECT COUNT(*) FROM ids LEFT JOIN birthday ON ids.id = birthday.chatId WHERE ids.uid = ${msg.from.id} AND birthday.id = ${disarmData(idToDelete[1])}) > 0 THEN ${disarmData(idToDelete[1])} ELSE null END`).run();
+        let sql = db.prepare(`DELETE FROM birthday WHERE id = CASE WHEN (SELECT COUNT(*) FROM ids LEFT JOIN birthday ON ids.id = birthday.chatId WHERE ids.uid = ${msg.from.id} AND birthday.id = ${disarmData(idToDelete[1])}) > 0 THEN ${disarmData(idToDelete[1])} ELSE null END;`).run();
         if (sql.changes > 0) {
             return msg.reply.text(`Perfetto! Compleanno eliminato!`, {replyMarkup: replyMarkupOptions});
         } else {

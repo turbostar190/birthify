@@ -1,21 +1,21 @@
 # birthify
 
-Source code of the Italian bot Birthify, available on [Telegram](https://t.me/birthdayNotify_bot)
+Source code of the Italian bot Birthify, available on [Telegram](https://t.me/birthdayNotify_bot).
 
 ### Configuration
 
-Create the SQLite3 database using the code given in `src/create_db.sql` and place in `src` folder. A simple utility to create the db is [sqlitestudio](https://sqlitestudio.pl).
+Create the SQLite3 database using the code given in `src/create_db.sql` and place it in `src` folder. A simple utility to create the db is [sqlitestudio](https://sqlitestudio.pl).
 
-Then, a `.env_sample` file is placed in root directory and it must be renamed `.env` after changing values according to the following table:
+Then, a `config.json.example` file is placed in `config` directory and it must be renamed `config.json` after changing values according to the following table:
 
 | Key | Required | Description |
 | --- | --- | --- |
-| `TOKEN` | Yes | The [Telegram Bot API](https://core.telegram.org/bots/api) bot token |
-| `DB_FILENAME` | Yes| SQLite3 database filename from root directory (i.e. `src/db.sqlite3`) |
+| `telegram.token` | Yes | The [Telegram Bot API](https://core.telegram.org/bots/api) bot token |
+| `db.path` | Yes| SQLite3 database filename from root directory (i.e. `src/db.sqlite3`) |
 
 ### How to run it
 
-Make sure Node is installed, then from the root directory run 
+Make sure Node is installed, then from the ***root directory*** run 
 ```bash
 npm run start
 ```
