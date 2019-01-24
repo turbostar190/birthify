@@ -1,24 +1,24 @@
 require('dotenv').config();
 const TeleBot = require('telebot');
 const Database = require('better-sqlite3');
-const db = new Database('src/db.sqlite3', {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
+const db = new Database(process.env.DB_FILENAME, {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
 const moment = require('moment');
 
 const BUTTONS = {
     add: {
-        label: 'Aggiungi',
+        label: '\u2795 Aggiungi',
         command: '/add'
     },
     remove: {
-        label: 'Rimuovi',
+        label: '🗑️ Rimuovi', // Lì dentro c'è una emoji...
         command: '/remove'
     },
     lista: {
-        label: 'Lista',
+        label: '☰ Lista',
         command: '/lista'
     },
     annulla: {
-        label: 'Annulla',
+        label: '\u274C Annulla',
         command: '/cancel'
     }
 };
@@ -140,7 +140,7 @@ let data = "";
 // Ask comp event
 bot.on('ask.comp', msg => {
     let text = msg.text;
-    if (text === "Annulla") return;
+    if (text === BUTTONS.annulla.label) return;
 
     if (re.test(text)) {
         data = text;
@@ -153,7 +153,7 @@ bot.on('ask.comp', msg => {
 // Ask nome event
 bot.on('ask.nome', msg => {
     const nome = msg.text;
-    if (nome === "Annulla") return;
+    if (nome === BUTTONS.annulla.label) return;
 
     let chatId = isNew(msg.from.id).chatId;
     let sql = db.prepare("INSERT INTO birthday (chatId, date, name) VALUES (?, ?, ?)").run(String(chatId), moment(data, "DD/MM/YYYY").format("YYYY-MM-DD"), nome);
@@ -183,11 +183,10 @@ bot.on('/remove', msg => {
         ask: 'confDel',
         replyMarkup: replyMarkup
     });
-
 });
 bot.on('ask.confDel', msg => {
     let text = msg.text;
-    if (text === "Annulla") return;
+    if (text === BUTTONS.annulla.label) return;
 
     /**
      * Regex per controllo "link" di cancellazione ricevuto

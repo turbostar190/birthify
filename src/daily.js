@@ -2,7 +2,7 @@ require('dotenv').config();
 const TeleBot = require('telebot');
 const bot = new TeleBot(process.env.TOKEN); // https://github.com/mullwar/telebot
 const Database = require('better-sqlite3');
-const db = new Database('src/db.sqlite3', {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
+const db = new Database(process.env.DB_FILENAME, {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
 const moment = require('moment');
 
 let today = moment().format("DD/MM/");

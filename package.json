@@ -1,14 +1,15 @@
 {
   "name": "birthify",
   "version": "1.0.0",
-  "description": "",
+  "description": "Questo bot permette di salvare le date di nascita dei tuoi amici e ricevere una notifica il giorno del compleanno",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/main.js"
+    "start": "node src/main.js",
+    "daily": "node src/daily.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["birthify", "birthday", "telegram", "bot"],
+  "author": "Federico C.",
   "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^5.0.1",
