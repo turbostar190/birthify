@@ -15,16 +15,15 @@ Then, a `.env_sample` file is placed in root directory and it must be renamed `.
 
 ### How to run it
 
-Make sure Node is installed, then run 
+Make sure Node is installed, then from the root directory run 
 ```bash
 npm run start
 ```
-in the root directory.
 
 To use the daily notifier add the commmand 
 ```bash
 npm run daily
 ```
-to [Crontab](https://www.adminschoice.com/crontab-quick-reference)
+to [Crontab](https://www.adminschoice.com/crontab-quick-reference).
 
-***N.B. Without any other configurations, Crontab uses absolute path from `$HOME`***
+***N.B. Without any other configurations, Crontab uses absolute path from `$HOME`!***
