@@ -12,9 +12,9 @@
   "author": "Federico C.",
   "license": "ISC",
   "dependencies": {
-    "better-sqlite3": "^5.0.1",
+    "better-sqlite3": "^5.4.0",
     "dotenv": "^6.2.0",
-    "moment": "^2.22.2",
+    "moment": "^2.24.0",
     "telebot": "^1.2.6"
   }
 }
