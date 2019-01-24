@@ -65,4 +65,5 @@ typings/
 src/db.sqlite3
 
 .idea
+src/config/config.json
 src/test.js
