@@ -229,9 +229,9 @@ const replyMarkupOptions = bot.keyboard([ // Tastiera di default con i tre botto
 ], {resize: true});
 bot.on('/start', (msg) => {
     if (isNew(msg.from.id).success) {
-        msg.reply.text("Benvenuto nel bot! Comandi disponibili in basso.", {replyMarkupOptions});
+        msg.reply.text("Benvenuto nel bot! Comandi disponibili in basso.", {replyMarkup: replyMarkupOptions});
     } else {
-        msg.reply.text("Felice di risentirti nel bot! Comandi disponibili in basso.", {replyMarkupOptions});
+        msg.reply.text("Felice di risentirti nel bot! Comandi disponibili in basso.", {replyMarkup: replyMarkupOptions});
     }
 });
 
