@@ -59,12 +59,28 @@ function getEta(date) {
 }
 
 /**
- * Restituisce la query dei compleanni salvati da quell'utente
+ * Restituisce la query dei compleanni salvati da quell'utente ordinati per mese-giorno
  * @param {number} uid uid della chat/utente
  * @returns {{ empty: boolean, res: Object}}
  */
 function getBirthdays(uid) {
-    let res = db.prepare('SELECT * FROM ids, birthday WHERE ids.id = birthday.chatId AND ids.uid = ? ORDER BY birthday.date ASC;').all(String(uid));
+    let res = db.prepare('SELECT * FROM ids, birthday WHERE ids.id = birthday.chatId AND ids.uid = ?;').all(String(uid));
+
+    let d1 = moment();
+    let d2 = moment();
+
+    res.sort(function (a, b) {
+        a = a.date.split('-');
+        b = b.date.split('-');
+
+        d1.date(a[2]);
+        d1.month(a[1]-1);
+        d2.date(b[2]);
+        d2.month(b[1]-1);
+
+        return d1 - d2;
+    });
+
     return {empty: res.length === 0, res: res};
 }
 
