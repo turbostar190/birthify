@@ -159,6 +159,8 @@ bot.on('ask.comp', msg => {
     if (text === BUTTONS.annulla.label) return;
 
     if (re.test(text)) {
+        if (moment(text) > moment()) return msg.reply.text(`Non puoi inserire una data futura!`, {replyMarkup: replyMarkupOptions});
+
         data = text;
         return msg.reply.text(`Inserisci il nome del festeggiato: `, {ask: 'nome'});
     } else {
@@ -235,4 +237,4 @@ bot.on('/start', (msg) => {
     }
 });
 
-bot.start();
+// bot.start();
