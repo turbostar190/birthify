@@ -237,4 +237,4 @@ bot.on('/start', (msg) => {
     }
 });
 
-// bot.start();
+bot.start();
