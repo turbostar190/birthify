@@ -31,6 +31,12 @@ const bot = new TeleBot({
         }
     }
 }); // https://github.com/mullwar/telebot
+const replyMarkupOptions = bot.keyboard([ // Tastiera di default con i tre bottoni
+    [BUTTONS.add.label, BUTTONS.lista.label, BUTTONS.remove.label]
+], {resize: true});
+const replyMarkupAnnulla = bot.keyboard([ // Solo bottone 'annulla'
+    [BUTTONS.annulla.label]
+], {resize: true});
 
 /**
  * Verifica se l'utente ha già utilizzato il bot in precedenza, in caso negativo salva il suo uid
@@ -74,9 +80,9 @@ function getBirthdays(uid) {
         b = b.date.split('-');
 
         d1.date(a[2]);
-        d1.month(a[1]-1);
+        d1.month(a[1] - 1);
         d2.date(b[2]);
-        d2.month(b[1]-1);
+        d2.month(b[1] - 1);
 
         return d1 - d2;
     });
@@ -133,16 +139,43 @@ function disarmData(data) {
     return data;
 }
 
-// Aggiunta compleanno
-bot.on('/add', msg => {
-    let replyMarkup = bot.keyboard([ // Solo bottone 'annulla'
-        [BUTTONS.annulla.label]
-    ], {resize: true});
+// TODO: Permettere inserimento senza anno di nascita
+var lastMessage; // Salva id messaggio da modificare
+bot.on('/add', msg => { // Aggiunta compleanno
+    let replyMarkup = bot.inlineKeyboard([
+        [
+            bot.inlineButton('Sì', {callback: 'annoSi'}),
+            bot.inlineButton('No', {callback: 'annoNo'})
+        ]
+    ]);
 
-    return bot.sendMessage(msg.from.id, "Inserisci la data di nascita (gg/mm/aaaa): ", {
-        ask: 'comp',
-        replyMarkup: replyMarkup
-    });
+    return bot.sendMessage(msg.from.id, "Conosci l'anno di nascita?", {replyMarkup: replyMarkup})
+        .then(re => {
+            lastMessage = [msg.from.id, re.message_id];
+        });
+});
+
+bot.on('callbackQuery', msg => {
+    let replyMarkup = bot.inlineKeyboard([]); // Nasconde bottoni
+
+    if (!lastMessage) {
+        return bot.sendMessage(msg.from.id, 'Operazione scaduta. Riprova!');
+    }
+
+    let [chatId, messageId] = lastMessage;
+    let query = msg.data;
+
+    if (query === 'annoSi') {
+        return bot.editMessageReplyMarkup({chatId, messageId}, {replyMarkup})
+            .then(() => {
+                bot.sendMessage(msg.from.id, 'Inserisci la data di nascita (gg/mm/aaaa)', {
+                    ask: 'comp',
+                    replyMarkup: replyMarkupAnnulla
+                });
+            });
+    } else {
+        // TODO: Non sa l'anno di nascita
+    }
 });
 
 /**
@@ -152,14 +185,13 @@ bot.on('/add', msg => {
  */
 const re = /(^(((0[1-9]|1[0-9]|2[0-8])[\/](0[1-9]|1[012]))|((29|30|31)[\/](0[13578]|1[02]))|((29|30)[\/](0[4,6,9]|11)))[\/](19|[2-9][0-9])\d\d$)|(^29[\/]02[\/](19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)/;
 
-let data = "";
-// Ask comp event
-bot.on('ask.comp', msg => {
+var data;
+bot.on('ask.comp', msg => { // Ask comp event
     let text = msg.text;
     if (text === BUTTONS.annulla.label) return;
 
     if (re.test(text)) {
-        if (moment(text) > moment()) return msg.reply.text(`Non puoi inserire una data futura!`, {replyMarkup: replyMarkupOptions});
+        if (moment(text, 'DD/MM/YYYY') > moment()) return msg.reply.text(`Non puoi inserire una data futura!`, {replyMarkup: replyMarkupOptions});
 
         data = text;
         return msg.reply.text(`Inserisci il nome del festeggiato: `, {ask: 'nome'});
@@ -168,8 +200,7 @@ bot.on('ask.comp', msg => {
     }
 });
 
-// Ask nome event
-bot.on('ask.nome', msg => {
+bot.on('ask.nome', msg => { // Ask nome event
     const nome = msg.text;
     if (nome === BUTTONS.annulla.label) return;
 
@@ -183,23 +214,18 @@ bot.on('ask.nome', msg => {
     }
 });
 
-// Lista compleanni
-bot.on('/lista', msg => {
+bot.on('/lista', msg => { // Lista compleanni
     let toSend = printBirthdays(msg.from.id, false);
     msg.reply.text(toSend, {parseMode: 'html'});
 });
 
-// Rimuovi compleanno
-bot.on('/remove', msg => {
-    let replyMarkup = bot.keyboard([ // Solo bottone 'annulla'
-        [BUTTONS.annulla.label]
-    ], {resize: true});
+bot.on('/remove', msg => { // Rimuovi compleanno
 
     if (getBirthdays(msg.from.id).empty) return msg.reply.text("Non hai ancora inserito nessun compleanno!"); // Se nessuno memorizzato stop
 
     return msg.reply.text(`Quale compleanno vuoi eliminare?\n${printBirthdays(msg.from.id, true)}`, {
         ask: 'confDel',
-        replyMarkup: replyMarkup
+        replyMarkup: replyMarkupAnnulla
     });
 });
 bot.on('ask.confDel', msg => {
@@ -214,6 +240,7 @@ bot.on('ask.confDel', msg => {
     let re = new RegExp("del_\\d+");
     if (re.test(text)) {
         let idToDelete = text.split("_");
+        // La query non sembra andare a buon fine se i parametri sono nel run...
         let sql = db.prepare(`DELETE FROM birthday WHERE id = CASE WHEN (SELECT COUNT(*) FROM ids LEFT JOIN birthday ON ids.id = birthday.chatId WHERE ids.uid = ${msg.from.id} AND birthday.id = ${disarmData(idToDelete[1])}) > 0 THEN ${disarmData(idToDelete[1])} ELSE null END;`).run();
         if (sql.changes > 0) {
             return msg.reply.text(`Perfetto! Compleanno eliminato!`, {replyMarkup: replyMarkupOptions});
@@ -226,9 +253,6 @@ bot.on('ask.confDel', msg => {
 // Annulla tutto
 bot.on('/cancel', (msg) => msg.reply.text('Azione annullata!', {replyMarkup: replyMarkupOptions})); // Annulla tutto
 
-const replyMarkupOptions = bot.keyboard([ // Tastiera di default con i tre bottoni
-    [BUTTONS.add.label, BUTTONS.lista.label, BUTTONS.remove.label]
-], {resize: true});
 bot.on('/start', (msg) => {
     if (isNew(msg.from.id).success) {
         msg.reply.text("Benvenuto nel bot! Comandi disponibili in basso.", {replyMarkup: replyMarkupOptions});
