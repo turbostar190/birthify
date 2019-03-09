@@ -19,5 +19,7 @@ function getEta(date) {
 
 res.forEach(function (row) {
     let eta = getEta(row.date);
-    return bot.sendMessage(row.uid, `🎂 ${row.name} compie ${eta} anni! Auguri!`);
+    let anno = {sing: "anno", plur: "anni"};
+    // console.log(`🎂 ${row.name} compie ${eta} ${eta == 1 ? anno.sing : anno.plur}! Auguri!`);
+    return bot.sendMessage(row.uid, `🎂 ${row.name} compie ${eta} ${eta == 1 ? anno.sing : anno.plur}! Auguri!`);
 });

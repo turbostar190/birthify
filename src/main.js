@@ -3,6 +3,7 @@ const TeleBot = require('telebot');
 const Database = require('better-sqlite3');
 const db = new Database(config('db').path, {fileMustExist: true}); // https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md
 const moment = require('moment');
+const utils = require("./utils.js");
 
 const BUTTONS = {
     add: {
@@ -97,7 +98,7 @@ function getBirthdays(uid) {
  * @returns {string}
  */
 function printBirthdays(uid, elimina) {
-    let send = "";
+    let send = String();
     let bir = getBirthdays(uid);
 
     if (bir.empty) {
@@ -109,7 +110,19 @@ function printBirthdays(uid, elimina) {
             });
         } else { // Lista per bottone 'Lista'
             bir.res.forEach(function (row) {
-                send += `${row.name}: ${moment(row.date, "YYYY-MM-DD").format("DD/MM/YYYY")} - ${getEta(row.date)} anni\n`;
+                let eta = getEta(row.date); // Anni
+                let etaTesto = utils.itLang.anno.plur;
+                if (eta === 0) { // Passo ai mesi
+                    eta = moment().diff(row.date, 'month');
+                    etaTesto = (eta === 1) ? utils.itLang.mese.sing : utils.itLang.mese.plur;
+                    if (eta === 0) { // Passo ai giorni
+                        eta = moment().diff(row.date, 'day');
+                        etaTesto = (eta === 1) ? utils.itLang.giorno.sing : utils.itLang.giorno.plur;
+                    }
+                } else if (eta === 1) {
+                    etaTesto = utils.itLang.anno.sing;
+                }
+                send += `${row.name}: ${moment(row.date, "YYYY-MM-DD").format("DD/MM/YYYY")} - ${eta} ${etaTesto}\n`;
             });
         }
     }
