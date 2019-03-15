@@ -8,12 +8,18 @@
     "start": "node src/main.js",
     "daily": "node src/daily.js"
   },
-  "keywords": ["birthify", "birthday", "telegram", "bot"],
+  "keywords": [
+    "birthify",
+    "birthday",
+    "telegram",
+    "bot"
+  ],
   "author": "Federico C.",
   "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^5.4.0",
     "moment": "^2.24.0",
-    "telebot": "^1.2.6"
+    "telebot": "^1.2.6",
+    "winston": "^3.2.1"
   }
 }
