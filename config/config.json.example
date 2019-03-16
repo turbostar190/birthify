@@ -1,8 +1,0 @@
-{
-  "telegram": {
-    "token": "your_api_bot_token"
-  },
-  "db": {
-    "path": "path_to_sqlite3_db"
-  }
-}

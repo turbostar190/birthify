@@ -1,11 +1,10 @@
 {
   "name": "birthify",
   "version": "1.0.0",
-  "description": "Questo bot permette di salvare le date di nascita dei tuoi amici e ricevere una notifica il giorno del compleanno",
-  "main": "index.js",
+  "description": "Questo bot permette di salvare le date di nascita dei tuoi amici e ricevere una notifica il giorno del compleanno.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/main.js",
+    "start": "node src/main_birthify.js",
     "daily": "node src/daily.js"
   },
   "keywords": [

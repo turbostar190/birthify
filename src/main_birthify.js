@@ -10,7 +10,6 @@ const utils = require("./utils.js");
 const myFormat = printf(({ level, message, label, timestamp }) => {
     return `${timestamp} [${label}] ${level}: ${message}`;
 });
-
 // Configure a logger
 const logger = createLogger({
     level: "info", // "debug"
@@ -149,12 +148,8 @@ function disarmData(data) {
     data = data
         .trim()
         .replace(/\\(.)/mg, "$1")
-        .replace(/[&<>"']/g, function (m) {
-            return map[m];
-        })
-        .replace(/[\u00A0-\u9999<>\&]/gim, function (i) {
-            return '&#' + i.charCodeAt(0) + ';';
-        })
+        .replace(/[&<>"']/g, function (m) { return map[m]; })
+        .replace(/[\u00A0-\u9999<>\&]/gim, function (i) { return '&#' + i.charCodeAt(0) + ';'; })
         .replace("'", "''");
 
     return data;
@@ -178,55 +173,63 @@ const re = /(^(((0[1-9]|1[0-9]|2[0-8])[\/](0[1-9]|1[012]))|((29|30|31)[\/](0[135
 
 var data = String();
 bot.on('ask.comp', msg => { // Ask comp event
+    let uid = msg.from.id;
     let text = msg.text;
     if (text === BUTTONS.annulla.label) return;
 
     if (re.test(text)) {
-        if (moment(text, 'DD/MM/YYYY') > moment()) return msg.reply.text(`Non puoi inserire una data futura!`, {replyMarkup: replyMarkupOptions});
+        if (moment(text, 'DD/MM/YYYY') > moment()) {
+            logger.warn(`ask.comp futuro ${text}`, {label: uid});
+            return msg.reply.text(`Non puoi inserire una data futura!`, {replyMarkup: replyMarkupOptions});
+        }
 
-        logger.info("ask.comp data valida", {label: msg.from.id});
         data = text;
+        logger.info(`ask.comp valido text: ${text} - data: ${data}`, {label: uid});
         return msg.reply.text(`Inserisci il nome del festeggiato: `, {ask: 'nome'});
     } else {
-        logger.error(`Invalid date: ${text}`);
+        logger.error(`Invalid date: ${text}`, {label: uid});
         return msg.reply.text('Formato non valido! Reinserisci la data di nascita (esempio 15/12/2000): ', {ask: 'comp'});
     }
 });
 
 bot.on('ask.nome', msg => { // Ask nome event
-    const nome = msg.text;
+    let uid = msg.from.id;
+    let nome = msg.text;
     if (nome === BUTTONS.annulla.label) return;
 
-    let chatId = isNew(msg.from.id).chatId;
+    let chatId = isNew(uid).chatId;
     let sql = db.prepare("INSERT INTO birthday (chatId, date, name) VALUES (?, ?, ?);").run(String(chatId), moment(data, "DD/MM/YYYY").format("YYYY-MM-DD"), nome);
 
     if (sql.changes > 0) {
-        logger.info("ask.nome compleanno inserito", {label: msg.from.id});
+        logger.info(`ask.nome inserito chatId: ${chatId}, data: ${data}, nome: ${nome}`, {label: uid});
         return msg.reply.text(`Perfetto! Compleanno inserito!`, {replyMarkup: replyMarkupOptions});
     } else {
-        logger.error("ask.nome errore inserimento");
+        logger.error(`ask.nome errore inserimento chatId: ${chatId}, data: ${data}, nome: ${nome}`, {label: uid});
         return msg.reply.text(`Qualcosa è andato storto! Ritenta l'inserimento premendo 'Aggiungi'`, {replyMarkup: replyMarkupOptions});
     }
 });
 
 bot.on('/lista', msg => { // Lista compleanni
-    logger.info(`/lista`, {label: msg.from.id});
-    let toSend = printBirthdays(msg.from.id, false);
+    let uid = msg.from.id;
+
+    logger.info(`/lista`, {label: uid});
+    let toSend = printBirthdays(uid, false);
     return msg.reply.text(toSend, {parseMode: 'html'});
 });
 
 bot.on('/remove', msg => { // Rimuovi compleanno
+    let uid = msg.from.id;
+    logger.info(`/remove`, {label: uid});
 
-    if (getBirthdays(msg.from.id).empty) return msg.reply.text("Non hai ancora inserito nessun compleanno!"); // Se nessuno memorizzato stop
+    if (getBirthdays(uid).empty) return msg.reply.text("Non hai ancora inserito nessun compleanno!"); // Se nessuno memorizzato stop
 
-    logger.info(`/remove`, {label: msg.from.id});
-
-    return msg.reply.text(`Quale compleanno vuoi eliminare?\n${printBirthdays(msg.from.id, true)}`, {
+    return msg.reply.text(`Quale compleanno vuoi eliminare?\n${printBirthdays(uid, true)}`, {
         ask: 'confDel',
         replyMarkup: replyMarkupAnnulla
     });
 });
 bot.on('ask.confDel', msg => {
+    let uid = msg.from.id;
     let text = msg.text;
     if (text === BUTTONS.annulla.label) return;
 
@@ -239,26 +242,32 @@ bot.on('ask.confDel', msg => {
     if (re.test(text)) {
         let idToDelete = text.split("_");
         // La query non sembra andare a buon fine se i parametri sono nel run...
-        let sql = db.prepare(`DELETE FROM birthday WHERE id = CASE WHEN (SELECT COUNT(*) FROM ids LEFT JOIN birthday ON ids.id = birthday.chatId WHERE ids.uid = ${msg.from.id} AND birthday.id = ${disarmData(idToDelete[1])}) > 0 THEN ${disarmData(idToDelete[1])} ELSE null END;`).run();
+        let sql = db.prepare(`DELETE FROM birthday WHERE id = CASE WHEN (SELECT COUNT(*) FROM ids LEFT JOIN birthday ON ids.id = birthday.chatId WHERE ids.uid = ${uid} AND birthday.id = ${disarmData(idToDelete[1])}) > 0 THEN ${disarmData(idToDelete[1])} ELSE null END;`).run();
         if (sql.changes > 0) {
-            logger.info(`ask.confDel compleanno eliminato`, {label: msg.from.id});
+            logger.info(`ask.confDel eliminato text: ${text}`, {label: uid});
             return msg.reply.text(`Perfetto! Compleanno eliminato!`, {replyMarkup: replyMarkupOptions});
         } else {
-            logger.info(`ask.confDel errore eliminazione compleanno`, {label: msg.from.id});
+            logger.info(`ask.confDel errore eliminazione text: ${text}`, {label: uid});
             return msg.reply.text(`Qualcosa è andato storto! Ritenta l'eliminazione premendo 'Rimuovi'`, {replyMarkup: replyMarkupOptions});
         }
+    } else {
+        logger.error(`Pattern eliminazione non valido! text: ${text}`, {label: uid});
+        return msg.reply.text(`Qualcosa è andato storto! Ritenta l'eliminazione premendo 'Rimuovi'`, {replyMarkup: replyMarkupOptions});
     }
 });
 
-// Annulla tutto
-bot.on('/cancel', (msg) => msg.reply.text('Azione annullata!', {replyMarkup: replyMarkupOptions})); // Annulla tutto
+bot.on('/cancel', (msg) => { // Annulla tutto
+    logger.info("/cancel", {label: msg.from.id});
+    msg.reply.text('Azione annullata!', {replyMarkup: replyMarkupOptions})
+});
 
 bot.on('/start', (msg) => {
-    if (isNew(msg.from.id).success) {
-        logger.info(`/start new`, {label: msg.from.id});
+    let uid = msg.from.id;
+    if (isNew(uid).success) {
+        logger.info(`/start new`, {label: uid});
         return msg.reply.text("Benvenuto nel bot! Comandi disponibili in basso.", {replyMarkup: replyMarkupOptions});
     } else {
-        logger.info(`/start`, {label: msg.from.id});
+        logger.info(`/start`, {label: uid});
         return msg.reply.text("Felice di risentirti nel bot! Comandi disponibili in basso.", {replyMarkup: replyMarkupOptions});
     }
 });
