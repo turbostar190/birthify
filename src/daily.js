@@ -8,6 +8,7 @@ const moment = require('moment');
 let today = moment().format("MM-DD");
 let res = db.prepare('SELECT ids.uid, birthday.date, birthday.name FROM ids, birthday WHERE ids.id = birthday.chatId AND date LIKE ?;').all(`____-${today}`);
 db.close();
+
 /**
  * Ottiene gli anni data la data di nascita
  * @param {string} date data formattata in YYYY-MM-DD
