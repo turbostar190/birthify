@@ -60,8 +60,10 @@ typings/
 # next.js build output
 .next
 
+### USER
 # DB
 src/db.sqlite3
 
 .idea
+config/config.json
 src/test.js
